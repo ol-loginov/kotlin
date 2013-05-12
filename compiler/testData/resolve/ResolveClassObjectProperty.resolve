@@ -1,0 +1,7 @@
+class A {
+  class object {
+    ~some~val some = 1
+  }
+
+  val other = `some`some
+}

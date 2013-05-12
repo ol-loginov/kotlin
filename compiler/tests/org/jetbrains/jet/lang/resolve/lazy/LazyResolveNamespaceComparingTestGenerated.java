@@ -2122,6 +2122,11 @@ public class LazyResolveNamespaceComparingTestGenerated extends AbstractLazyReso
             doTestCheckingPrimaryConstructors("compiler/testData/lazyResolve/namespaceComparator/propertyClassFileDependencyRecursion.kt");
         }
         
+        @TestMetadata("ResolveClassObjectProperty.kt")
+        public void testResolveClassObjectProperty() throws Exception {
+            doTestCheckingPrimaryConstructors("compiler/testData/lazyResolve/namespaceComparator/ResolveClassObjectProperty.kt");
+        }
+        
         @TestMetadata("sameClassNameResolve.kt")
         public void testSameClassNameResolve() throws Exception {
             doTestCheckingPrimaryConstructors("compiler/testData/lazyResolve/namespaceComparator/sameClassNameResolve.kt");
