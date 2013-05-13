@@ -129,3 +129,4 @@ public class QuickFixFactoryForTypeMismatchError implements JetIntentionActionsF
         return actions;
     }
 }
+
