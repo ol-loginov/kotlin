@@ -1,0 +1,1 @@
+fun testFun(var <caret>parameter) = 0
