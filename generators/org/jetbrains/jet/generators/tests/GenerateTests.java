@@ -31,6 +31,7 @@ import org.jetbrains.jet.completion.AbstractJavaCompletionTest;
 import org.jetbrains.jet.completion.AbstractJavaWithLibCompletionTest;
 import org.jetbrains.jet.completion.AbstractJetJSCompletionTest;
 import org.jetbrains.jet.completion.AbstractKeywordCompletionTest;
+import org.jetbrains.jet.descriptors.serialization.AbstractDescriptorSerializationTest;
 import org.jetbrains.jet.jvm.compiler.*;
 import org.jetbrains.jet.lang.psi.AbstractJetPsiMatcherTest;
 import org.jetbrains.jet.lang.resolve.lazy.AbstractLazyResolveDescriptorRendererTest;
@@ -210,6 +211,13 @@ public class GenerateTests {
                 "ModuleXmlParserTestGenerated",
                 AbstractModuleXmlParserTest.class,
                 testModel("compiler/testData/modules.xml", true, "xml", "doTest")
+        );
+
+        generateTest(
+                "compiler/tests/",
+                "DescriptorSerializationTestGenerated",
+                AbstractDescriptorSerializationTest.class,
+                testModel("compiler/testData/loadKotlin")
         );
 
         generateTest(
