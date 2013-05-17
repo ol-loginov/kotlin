@@ -314,7 +314,7 @@
             <classpath refid="classpath"/>
         </javac>
 
-        <pack_compiler jarfile="${output}/kotlin-compiler-before-shrink.jar"/>
+        <pack_compiler jarfile="${output}/kotlin-compiler-full.jar"/>
 
         <delete file="${kotlin-home}/lib/kotlin-compiler.jar" failonerror="false"/>
 
@@ -322,7 +322,7 @@
             <isfalse value="${shrink}"/>
 
             <then>
-                <copy file="${output}/kotlin-compiler-before-shrink.jar"
+                <copy file="${output}/kotlin-compiler-full.jar"
                       tofile="${kotlin-home}/lib/kotlin-compiler.jar"/>
             </then>
 
@@ -331,7 +331,7 @@
                 <available property="rtjar" value="${java.home}/../Classes/classes.jar" file="${java.home}/../Classes/classes.jar"/>
 
                 <proguard><![CDATA[
-                    -injars '${output}/kotlin-compiler-before-shrink.jar'(
+                    -injars '${output}/kotlin-compiler-full.jar'(
                     !com/thoughtworks/xstream/converters/extended/ISO8601**,
                     !com/thoughtworks/xstream/converters/reflection/CGLIBEnhancedConverter**,
                     !com/thoughtworks/xstream/io/xml/Dom4J**,
