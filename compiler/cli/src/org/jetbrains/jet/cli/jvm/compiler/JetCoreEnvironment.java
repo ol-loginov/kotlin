@@ -177,11 +177,11 @@ public class JetCoreEnvironment {
 
         VirtualFile vFile = applicationEnvironment.getLocalFileSystem().findFileByPath(path);
         if (vFile == null) {
-            report(ERROR, "Source file or directory not found: " + path);
+            report(ERROR, "Source file or directory not found: " + path + " in " + (new File("")).getAbsolutePath());
             return;
         }
         if (!vFile.isDirectory() && vFile.getFileType() != JetFileType.INSTANCE) {
-            report(ERROR, "Source entry is not a Kotlin file: " + path);
+            report(ERROR, "Source entry is not a Kotlin file: " + vFile.getCanonicalPath());
             return;
         }
 
