@@ -19,10 +19,11 @@ if not "%JAVA_HOME%"=="" (
 if "%_JAVACMD%"=="" set _JAVACMD=java
 
 rem We use the value of the JAVA_OPTS environment variable if defined
-set _JAVA_OPTS=-Xmx256M -Xms32M -noverify
+set _JAVA_OPTS=%JAVA_OPTS%
+if "%_JAVA_OPTS%"=="" set _JAVA_OPTS=-Xmx256M -Xms32M -noverify
 
 "%_JAVACMD%" %_JAVA_OPTS% -cp "%_KOTLIN_HOME%\lib\kotlin-preloader.jar" ^
-    org.jetbrains.jet.preloading.Preloader "${KOTLIN_HOME}/lib/kotlin-compiler.jar" ^
+    org.jetbrains.jet.preloading.Preloader "%_KOTLIN_HOME%\lib\kotlin-compiler.jar" ^
     org.jetbrains.jet.cli.jvm.K2JVMCompiler 4096 notime org.jetbrains.jet.cli.jvm.K2JVMCompiler %*
 goto end
 
