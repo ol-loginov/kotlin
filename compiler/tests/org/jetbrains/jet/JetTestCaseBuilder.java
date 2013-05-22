@@ -47,6 +47,17 @@ public abstract class JetTestCaseBuilder {
         };
     }
 
+    @SuppressWarnings("UnusedDeclaration")
+    @NotNull
+    public static FilenameFilter filterByFileName(@NotNull final String fileName) {
+        return new FilenameFilter() {
+            @Override
+            public boolean accept(@NotNull File dir, @NotNull String name) {
+                return name.equals(fileName);
+            }
+        };
+    }
+
     public static String getTestDataPathBase() {
         return getHomeDirectory() + "/compiler/testData";
     }
