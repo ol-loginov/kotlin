@@ -1,0 +1,9 @@
+~PackageTest~open class PackageTest
+
+class MoreTest() {
+    class object: `PackageTest`PackageTest() {
+
+    }
+
+    object Some: `PackageTest`PackageTest()
+}

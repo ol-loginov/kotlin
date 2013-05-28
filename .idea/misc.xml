@@ -43,6 +43,9 @@
       </set>
     </option>
   </component>
+  <component name="ProjectKey">
+    <option name="state" value="git+ssh://git@github.com/JetBrains/kotlin.git" />
+  </component>
   <component name="ProjectResources">
     <default-html-doctype>http://www.w3.org/1999/xhtml</default-html-doctype>
   </component>

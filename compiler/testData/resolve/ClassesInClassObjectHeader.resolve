@@ -1,0 +1,11 @@
+class Test {
+  [`InnerAnnotation`InnerAnnotation]
+  class object : `StaticClass`StaticClass(), `!`InnerClass() {
+
+  }
+
+  ~InnerAnnotation~annotation class InnerAnnotation
+  ~StaticClass~open class StaticClass
+
+  ~InnerClass~open inner class InnerClass
+}
