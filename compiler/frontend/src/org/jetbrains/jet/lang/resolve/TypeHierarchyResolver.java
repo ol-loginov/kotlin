@@ -16,6 +16,7 @@
 
 package org.jetbrains.jet.lang.resolve;
 
+import com.google.common.base.Predicate;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
@@ -28,10 +29,7 @@ import org.jetbrains.jet.lang.descriptors.*;
 import org.jetbrains.jet.lang.descriptors.impl.*;
 import org.jetbrains.jet.lang.psi.*;
 import org.jetbrains.jet.lang.resolve.name.Name;
-import org.jetbrains.jet.lang.resolve.scopes.JetScope;
-import org.jetbrains.jet.lang.resolve.scopes.RedeclarationHandler;
-import org.jetbrains.jet.lang.resolve.scopes.WritableScope;
-import org.jetbrains.jet.lang.resolve.scopes.WriteThroughScope;
+import org.jetbrains.jet.lang.resolve.scopes.*;
 import org.jetbrains.jet.lang.types.JetType;
 import org.jetbrains.jet.lang.types.SubstitutionUtils;
 import org.jetbrains.jet.lang.types.TypeConstructor;
@@ -156,29 +154,13 @@ public class TypeHierarchyResolver {
      */
     @SuppressWarnings("SuspiciousMethodCalls")
     @NotNull
-    private JetScope getStaticScope(PsiElement declarationElement, @NotNull NamespaceLikeBuilder owner) {
-        DeclarationDescriptor ownerDescriptor = owner.getOwnerForChildren();
-        if (ownerDescriptor instanceof NamespaceDescriptorImpl) {
-            return context.getNamespaceScopes().get(declarationElement.getContainingFile());
-        }
-
-        if (ownerDescriptor instanceof MutableClassDescriptor) {
-            MutableClassDescriptor classDescriptor = (MutableClassDescriptor) ownerDescriptor;
-            if (classDescriptor.getKind() == ClassKind.CLASS_OBJECT) {
-                return classDescriptor.getScopeForMemberResolution();
+    private JetScope getStaticScope(JetScope outerScope) {
+        return new FilteringScope(outerScope, new Predicate<DeclarationDescriptor>() {
+            @Override
+            public boolean apply(@Nullable DeclarationDescriptor descriptor) {
+                return !(descriptor instanceof ClassDescriptor) || !((ClassDescriptor) descriptor).isInner();
             }
-
-            DeclarationDescriptor declaration = classDescriptor.getContainingDeclaration();
-            if (declaration instanceof NamespaceDescriptorImpl) {
-                return getStaticScope(declarationElement, ((NamespaceDescriptorImpl) declaration).getBuilder());
-            }
-
-            if (declaration instanceof MutableClassDescriptorLite) {
-                return getStaticScope(declarationElement, ((MutableClassDescriptorLite) declaration).getBuilder());
-            }
-        }
-
-        return null;
+        });
     }
 
     @Nullable
@@ -517,7 +499,7 @@ public class TypeHierarchyResolver {
             MutableClassDescriptorLite classObjectDescriptor = ownerClassDescriptor.getClassObjectDescriptor();
 
             assert classObjectDescriptor != null : enumEntry.getParent().getText();
-            createClassDescriptorForEnumEntry(enumEntry, classObjectDescriptor.getBuilder());
+            createClassDescriptorForEnumEntry(enumEntry, classObjectDescriptor);
         }
 
         @Override
@@ -530,9 +512,11 @@ public class TypeHierarchyResolver {
             JetObjectDeclaration objectDeclaration = classObject.getObjectDeclaration();
             if (objectDeclaration != null) {
                 Name classObjectName = getClassObjectName(owner.getOwnerForChildren().getName());
-                MutableClassDescriptor classObjectDescriptor =
-                      createClassDescriptorForObject(objectDeclaration, owner, getStaticScope(classObject, owner),
-                                                     classObjectName, ClassKind.CLASS_OBJECT);
+
+                MutableClassDescriptor classObjectDescriptor = createClassDescriptorForObject(
+                        objectDeclaration, owner, outerScope,
+                        classObjectName, ClassKind.CLASS_OBJECT);
+
                 NamespaceLikeBuilder.ClassObjectStatus status = owner.setClassObjectDescriptor(classObjectDescriptor);
                 switch (status) {
                     case DUPLICATE:
@@ -604,8 +588,15 @@ public class TypeHierarchyResolver {
                 @NotNull JetObjectDeclaration declaration, @NotNull NamespaceLikeBuilder owner,
                 @NotNull JetScope scope, @NotNull Name name, @NotNull ClassKind kind
         ) {
+            FilteringScope testScope = new FilteringScope(scope, new Predicate<DeclarationDescriptor>() {
+                @Override
+                public boolean apply(@Nullable DeclarationDescriptor descriptor) {
+                    return !(descriptor instanceof ClassDescriptor) || !((ClassDescriptor) descriptor).isInner();
+                }
+            });
+
             MutableClassDescriptor mutableClassDescriptor = new MutableClassDescriptor(
-                    owner.getOwnerForChildren(), scope, kind, false, name);
+                    owner.getOwnerForChildren(), testScope, kind, false, name);
             context.getObjects().put(declaration, mutableClassDescriptor);
 
             JetScope classScope = mutableClassDescriptor.getScopeForMemberResolution();
@@ -619,10 +610,12 @@ public class TypeHierarchyResolver {
 
         private MutableClassDescriptor createClassDescriptorForEnumEntry(
                 @NotNull JetEnumEntry declaration,
-                @NotNull NamespaceLikeBuilder owner
+                @NotNull MutableClassDescriptorLite classObjectDescriptor
         ) {
+            NamespaceLikeBuilder owner = classObjectDescriptor.getBuilder();
+
             MutableClassDescriptor mutableClassDescriptor = new MutableClassDescriptor(
-                    owner.getOwnerForChildren(), getStaticScope(declaration, owner), ClassKind.ENUM_ENTRY,
+                    owner.getOwnerForChildren(), getStaticScope(classObjectDescriptor.getScopeForMemberLookup()), ClassKind.ENUM_ENTRY,
                     false, JetPsiUtil.safeName(declaration.getName()));
             context.getClasses().put(declaration, mutableClassDescriptor);
 

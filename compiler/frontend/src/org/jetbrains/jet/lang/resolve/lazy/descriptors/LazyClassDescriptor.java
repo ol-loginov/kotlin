@@ -83,6 +83,8 @@ public class LazyClassDescriptor extends ClassDescriptorBase implements LazyDesc
     private final NullableLazyValue<ClassDescriptor> classObjectDescriptor;
 
     private final LazyClassMemberScope unsubstitutedMemberScope;
+    private final JetScope filteredMemberScope;
+
     private final JetScope unsubstitutedInnerClassesScope;
 
     private final NotNullLazyValue<JetScope> scopeForClassHeaderResolution;
@@ -108,8 +110,19 @@ public class LazyClassDescriptor extends ClassDescriptorBase implements LazyDesc
                 classLikeInfo.getClassKind() != ClassKind.ENUM_CLASS ? classLikeInfo : noEnumEntries(classLikeInfo);
         this.declarationProvider = resolveSession.getDeclarationProviderFactory().getClassMemberDeclarationProvider(classLikeInfoForMembers);
         this.containingDeclaration = containingDeclaration;
+
         this.unsubstitutedMemberScope = new LazyClassMemberScope(resolveSession, declarationProvider, this);
-        this.unsubstitutedInnerClassesScope = new InnerClassesScopeWrapper(unsubstitutedMemberScope);
+
+        this.filteredMemberScope = (classLikeInfo.getClassKind() == ClassKind.CLASS_OBJECT) ?
+                                   new FilteringScope(unsubstitutedMemberScope, new Predicate<DeclarationDescriptor>() {
+                                       @Override
+                                       public boolean apply(@Nullable DeclarationDescriptor descriptor) {
+                                           return !(descriptor instanceof ClassDescriptor) || !((ClassDescriptor) descriptor).isInner();
+                                       }
+                                   }) :
+                                   new LazyClassMemberScope(resolveSession, declarationProvider, this);
+
+        this.unsubstitutedInnerClassesScope = new InnerClassesScopeWrapper(filteredMemberScope);
 
         this.typeConstructor = new LazyClassTypeConstructor();
 
@@ -166,7 +179,7 @@ public class LazyClassDescriptor extends ClassDescriptorBase implements LazyDesc
 
     @Override
     protected JetScope getScopeForMemberLookup() {
-        return unsubstitutedMemberScope;
+        return filteredMemberScope;
     }
 
     @NotNull

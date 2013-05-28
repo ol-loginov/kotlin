@@ -1,0 +1,9 @@
+class Test {
+  [`ClassObjectAnnotation`ClassObjectAnnotation]
+  [`InnerAnnotation`InnerAnnotation]
+  class object {
+    ~ClassObjectAnnotation~annotation class ClassObjectAnnotation
+  }
+
+  ~InnerAnnotation~annotation class InnerAnnotation
+}
