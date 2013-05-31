@@ -83,14 +83,12 @@ public class LazyClassDescriptor extends ClassDescriptorBase implements LazyDesc
     private final NullableLazyValue<ClassDescriptor> classObjectDescriptor;
 
     private final LazyClassMemberScope unsubstitutedMemberScope;
-    private final JetScope filteredMemberScope;
 
     private final JetScope unsubstitutedInnerClassesScope;
 
     private final NotNullLazyValue<JetScope> scopeForClassHeaderResolution;
     private final NotNullLazyValue<JetScope> scopeForMemberDeclarationResolution;
     private final NotNullLazyValue<JetScope> scopeForPropertyInitializerResolution;
-
 
     public LazyClassDescriptor(
             @NotNull ResolveSession resolveSession,
@@ -112,17 +110,7 @@ public class LazyClassDescriptor extends ClassDescriptorBase implements LazyDesc
         this.containingDeclaration = containingDeclaration;
 
         this.unsubstitutedMemberScope = new LazyClassMemberScope(resolveSession, declarationProvider, this);
-
-        this.filteredMemberScope = (classLikeInfo.getClassKind() == ClassKind.CLASS_OBJECT) ?
-                                   new FilteringScope(unsubstitutedMemberScope, new Predicate<DeclarationDescriptor>() {
-                                       @Override
-                                       public boolean apply(@Nullable DeclarationDescriptor descriptor) {
-                                           return !(descriptor instanceof ClassDescriptor) || !((ClassDescriptor) descriptor).isInner();
-                                       }
-                                   }) :
-                                   new LazyClassMemberScope(resolveSession, declarationProvider, this);
-
-        this.unsubstitutedInnerClassesScope = new InnerClassesScopeWrapper(filteredMemberScope);
+        this.unsubstitutedInnerClassesScope = new InnerClassesScopeWrapper(unsubstitutedMemberScope);
 
         this.typeConstructor = new LazyClassTypeConstructor();
 
@@ -179,7 +167,7 @@ public class LazyClassDescriptor extends ClassDescriptorBase implements LazyDesc
 
     @Override
     protected JetScope getScopeForMemberLookup() {
-        return filteredMemberScope;
+        return unsubstitutedMemberScope;
     }
 
     @NotNull
@@ -195,18 +183,17 @@ public class LazyClassDescriptor extends ClassDescriptorBase implements LazyDesc
 
     @NotNull
     private JetScope computeScopeForClassHeaderResolution() {
-        WritableScopeImpl scope = new WritableScopeImpl(
-                JetScope.EMPTY, this, RedeclarationHandler.DO_NOTHING, "Class Header Resolution");
+        WritableScopeImpl scope = new WritableScopeImpl(JetScope.EMPTY, this, RedeclarationHandler.DO_NOTHING, "Scope with type parameters for " + name);
         for (TypeParameterDescriptor typeParameterDescriptor : getTypeConstructor().getParameters()) {
             scope.addClassifierDescriptor(typeParameterDescriptor);
         }
         scope.changeLockLevel(WritableScope.LockLevel.READING);
 
         PsiElement scopeAnchor = declarationProvider.getOwnerInfo().getScopeAnchor();
-        return new ChainedScope(
-                this,
-                "ScopeForClassHeaderResolution: " + getName(),
-                scope, getScopeProvider().getResolutionScopeForDeclaration(scopeAnchor));
+
+        return new ChainedScope(this, "ScopeForClassHeaderResolution: " + getName(),
+                scope,
+                getScopeProvider().getResolutionScopeForDeclaration(scopeAnchor));
     }
 
     @NotNull
@@ -216,10 +203,9 @@ public class LazyClassDescriptor extends ClassDescriptorBase implements LazyDesc
 
     @NotNull
     private JetScope computeScopeForMemberDeclarationResolution() {
-        WritableScopeImpl scope = new WritableScopeImpl(
-                JetScope.EMPTY, this, RedeclarationHandler.DO_NOTHING, "Member Declaration Resolution");
-        scope.addLabeledDeclaration(this);
-        scope.changeLockLevel(WritableScope.LockLevel.READING);
+        WritableScopeImpl thisScope = new WritableScopeImpl(JetScope.EMPTY, this, RedeclarationHandler.DO_NOTHING, "Scope with 'this' for " + name);
+        thisScope.addLabeledDeclaration(this);
+        thisScope.changeLockLevel(WritableScope.LockLevel.READING);
 
         ClassDescriptor classObject = getClassObjectDescriptor();
         JetScope classObjectAdapterScope = (classObject != null) ? new ClassToClassObjectResolveScope(classObject) : JetScope.EMPTY;
@@ -227,7 +213,7 @@ public class LazyClassDescriptor extends ClassDescriptorBase implements LazyDesc
         return new ChainedScope(
                 this,
                 "ScopeForMemberDeclarationResolution: " + getName(),
-                scope,
+                thisScope,
                 getScopeForMemberLookup(),
                 getScopeForClassHeaderResolution(),
                 classObjectAdapterScope);
@@ -243,14 +229,10 @@ public class LazyClassDescriptor extends ClassDescriptorBase implements LazyDesc
         ConstructorDescriptor primaryConstructor = getUnsubstitutedPrimaryConstructor();
         if (primaryConstructor == null) return getScopeForMemberDeclarationResolution();
 
-        WritableScopeImpl scope = new WritableScopeImpl(
-                JetScope.EMPTY, this, RedeclarationHandler.DO_NOTHING, "Property Initializer Resolution");
-
-        List<ValueParameterDescriptor> parameters = primaryConstructor.getValueParameters();
-        for (ValueParameterDescriptor valueParameterDescriptor : parameters) {
+        WritableScopeImpl scope = new WritableScopeImpl(JetScope.EMPTY, this, RedeclarationHandler.DO_NOTHING, "Scope with constructor parameters in " + name);
+        for (ValueParameterDescriptor valueParameterDescriptor : primaryConstructor.getValueParameters()) {
             scope.addVariableDescriptor(valueParameterDescriptor);
         }
-
         scope.changeLockLevel(WritableScope.LockLevel.READING);
 
         return new ChainedScope(

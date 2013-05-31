@@ -149,7 +149,10 @@ public class ScopeProvider {
                 return classDescriptor.getScopeForPropertyInitializerResolution();
             }
             if (jetDeclaration instanceof JetEnumEntry) {
-                return ((LazyClassDescriptor) classDescriptor.getClassObjectDescriptor()).getScopeForMemberDeclarationResolution();
+                LazyClassDescriptor descriptor = (LazyClassDescriptor) classDescriptor.getClassObjectDescriptor();
+                assert descriptor != null : "Descriptor ";
+
+                return descriptor.getScopeForMemberDeclarationResolution();
             }
             return classDescriptor.getScopeForMemberDeclarationResolution();
         }
