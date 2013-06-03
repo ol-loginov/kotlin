@@ -1,6 +1,8 @@
 class Test {
+
+  // Should be a error for InnerClass
   [`InnerAnnotation`InnerAnnotation]
-  class object : `StaticClass`StaticClass(), `!`InnerClass() {
+  class object : `StaticClass`StaticClass(), `InnerClass`InnerClass() {
 
   }
 

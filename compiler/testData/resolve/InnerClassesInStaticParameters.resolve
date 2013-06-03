@@ -1,0 +1,11 @@
+class Test {
+  class object {
+    fun test(t: `TestInner`TestInner) = 42
+  }
+
+  class TestStatic {
+    fun test(t: `TestInner`TestInner) = 42
+  }
+
+  ~TestInner~inner class TestInner
+}

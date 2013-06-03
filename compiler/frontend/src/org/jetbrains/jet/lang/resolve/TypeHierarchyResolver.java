@@ -154,7 +154,7 @@ public class TypeHierarchyResolver {
      */
     @SuppressWarnings("SuspiciousMethodCalls")
     @NotNull
-    private JetScope getStaticScope(JetScope outerScope) {
+    private static JetScope getStaticScope(JetScope outerScope) {
         return new FilteringScope(outerScope, new Predicate<DeclarationDescriptor>() {
             @Override
             public boolean apply(@Nullable DeclarationDescriptor descriptor) {
@@ -588,15 +588,17 @@ public class TypeHierarchyResolver {
                 @NotNull JetObjectDeclaration declaration, @NotNull NamespaceLikeBuilder owner,
                 @NotNull JetScope scope, @NotNull Name name, @NotNull ClassKind kind
         ) {
-            FilteringScope testScope = new FilteringScope(scope, new Predicate<DeclarationDescriptor>() {
-                @Override
-                public boolean apply(@Nullable DeclarationDescriptor descriptor) {
-                    return !(descriptor instanceof ClassDescriptor) || !((ClassDescriptor) descriptor).isInner();
-                }
-            });
+            //FilteringScope testScope = new FilteringScope(scope, new Predicate<DeclarationDescriptor>() {
+            //    @Override
+            //    public boolean apply(@Nullable DeclarationDescriptor descriptor) {
+            //        return !(descriptor instanceof ClassDescriptor) || !((ClassDescriptor) descriptor).isInner();
+            //    }
+            //});
+
+            // InnerClassesScopeWrapper innerClassesScopeWrapper = new InnerClassesScopeWrapper(scope);
 
             MutableClassDescriptor mutableClassDescriptor = new MutableClassDescriptor(
-                    owner.getOwnerForChildren(), testScope, kind, false, name);
+                    owner.getOwnerForChildren(), scope, kind, false, name);
             context.getObjects().put(declaration, mutableClassDescriptor);
 
             JetScope classScope = mutableClassDescriptor.getScopeForMemberResolution();
