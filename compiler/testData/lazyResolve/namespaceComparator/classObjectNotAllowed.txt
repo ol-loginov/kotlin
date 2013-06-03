@@ -1,0 +1,13 @@
+package test
+
+internal final class Some {
+    /*primary*/ public constructor Some()
+    
+    internal open inner class Other {
+        /*primary*/ public constructor Other()
+    }
+    
+    internal final inner class SomeInner {
+        /*primary*/ public constructor SomeInner()
+    }
+}
